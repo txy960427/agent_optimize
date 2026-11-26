@@ -1,0 +1,18 @@
+{
+  "archivedAt": "2026-11-25",
+  "sourceType": "user-provided screenshots",
+  "transcription": "design/sources/preface-readable-20261125.md",
+  "interpretation": "docs/product/PREFACE-READING-NOTES.md",
+  "sources": [
+    {
+      "path": "design/sources/preface-original-20261125.jpg",
+      "bytes": 8424739,
+      "sha256": "055c76f46db68e5b29b970caae1f158460872e3943460b64eb7ba5a9145f9747"
+    },
+    {
+      "path": "design/sources/preface-goals-detail-20261125.jpg",
+      "bytes": 714212,
+      "sha256": "d50cdbfed5ceb64d26ba298939e284b382e949f3dc6e524c78ef9092330e4d7b"
+    }
+  ]
+}

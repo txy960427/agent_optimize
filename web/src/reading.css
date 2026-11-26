@@ -1,0 +1,321 @@
+/* One reading system for chapter openings, long-form text and local contents. */
+.reading-page,
+.overview-main.home-focused.reading-page {
+  --reading-measure: 43em;
+  --reading-ink: #343e4d;
+  --reading-muted: #606c7d;
+  --reading-title: #263348;
+  max-width: 1320px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 28px 40px 60px;
+}
+.reading-layout.course-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 176px;
+  gap: 32px;
+  max-width: 1320px;
+  padding: 28px 40px 60px;
+  margin: 0 auto;
+  background: transparent;
+  align-items: start;
+}
+.reading-layout > .reading-page {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+}
+.reading-header {
+  margin: 0;
+  padding: 0;
+  border-bottom: 0;
+  min-width: 0;
+}
+.reading-header > .breadcrumb {
+  margin: 0 0 14px;
+  color: var(--reading-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  flex-wrap: wrap;
+}
+.reading-header h1 {
+  margin: 0 0 14px;
+  max-width: 28em;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -.015em;
+  color: var(--reading-title);
+  overflow-wrap: anywhere;
+}
+.reading-header .reading-lead {
+  max-width: var(--reading-measure);
+  margin: 0;
+  color: var(--reading-muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+.reading-header-actions { margin-top: 16px; }
+.reading-header-actions .course-return { margin: 0; }
+.reading-page > .preface-section,
+.reading-page > .article-section { margin: 30px 0 0; scroll-margin-top: 84px; }
+.reading-page > :is(.preface-section, .article-section) h2 {
+  color: var(--reading-title);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -.01em;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.reading-page > :is(.preface-section, .article-section) > p,
+.reading-page .preface-section-heading p {
+  max-width: var(--reading-measure);
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--reading-ink);
+  overflow-wrap: anywhere;
+}
+.reading-page :is(h1, h2, h3)[tabindex="-1"]:focus { outline: none; }
+.reading-page :is(.preface-purpose-goals, .preface-concepts, .preface-usage-links, .preface-scope-list) {
+  max-width: 880px;
+}
+.reading-page .preface-purpose-goals { gap: 20px 32px; margin: 20px 0; }
+.reading-page .preface-purpose-goals > div { min-width: 0; }
+.reading-page .preface-purpose-goals dt { font-size: 16px; color: var(--reading-title); }
+.reading-page .preface-purpose-goals dd { font-size: 15px; margin: 6px 0 0; color: var(--reading-ink); line-height: 1.8; }
+.reading-page .preface-scope-list { font-size: 16px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .preface-concepts dd { font-size: 15px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .preface-usage-links a { align-items: flex-start; font-size: 15px; color: var(--reading-ink); }
+.reading-page .preface-usage-links a > span { min-width: 0; }
+.reading-page .preface-next { padding-top: 28px; }
+.reading-page .overview-map-section { margin-top: 32px; }
+.reading-layout > .article-toc {
+  display: flex;
+  position: sticky;
+  top: 96px;
+  margin: 0;
+  padding: 0 0 0 16px;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+}
+.reading-layout > .article-toc > p { margin: 0 0 8px; font-size: 12px; color: #536985; }
+.reading-layout > .article-toc > a {
+  display: block;
+  padding: 6px 8px;
+  margin-left: -8px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  border-radius: 4px;
+}
+.reading-layout > .article-toc > a[aria-current="location"] { background: #e3ebfa; color: #3055a6; font-weight: 600; }
+
+/* Supporting material remains readable beside the article's 16px prose. */
+.reading-page .simple-table {
+  max-width: var(--reading-measure);
+  margin: 20px 0 24px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--reading-ink);
+}
+.reading-page .simple-table :is(th, td) { padding: 12px 14px; border-color: #e0e5ed; }
+.reading-page .simple-table th { white-space: nowrap; }
+.reading-page .simple-table thead th { background: #f0f3f7; color: #4b586b; }
+.reading-page .simple-table tbody th { color: var(--reading-title); }
+.reading-page .verification-list { padding: 16px 18px; background: #f3f5f8; }
+.reading-page .verification-list li { font-size: 15px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .verification-list svg { flex-shrink: 0; }
+.reading-page .method-figure h3 { font-size: 17px; color: var(--reading-title); }
+.reading-page .method-figure > p { font-size: 15px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .reading-extra button { min-height: 32px; font-size: 14px; color: var(--reading-muted); }
+.reading-page .reading-extra p { font-size: 15px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .quiz { background: #f5f6fb; padding: 22px; }
+.reading-page .quiz-heading h2 { font-size: 17px; line-height: 1.5; }
+.reading-page .quiz > p { font-size: 15px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .quiz-options label { min-height: 44px; font-size: 14px; line-height: 1.7; color: var(--reading-ink); }
+.reading-page .quiz-options input { flex-shrink: 0; }
+.reading-page .quiz-feedback { font-size: 14px; line-height: 1.8; color: var(--reading-ink); }
+.reading-page .article-footer > p { font-size: 12px; line-height: 1.8; color: var(--reading-muted); }
+
+/* File-tree density: one text scale, small indent steps, one selected row. */
+.app-content:has(.reading-page) { background: #fcfdff; }
+.reading-page :is(.preface-purpose-goals, .preface-scope-list, .preface-usage-links) { max-width: var(--reading-measure); }
+.app-sidebar {
+  --directory-text: #4b5565;
+  --directory-muted: #6c7685;
+  --directory-hover: #e9edf3;
+  --directory-selected: #e4eaf5;
+  padding: 16px 10px 10px;
+  background: #f2f4f7;
+  border-color: #dfe4ec;
+  overflow: hidden;
+  font-size: 13px;
+}
+.app-sidebar > nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c4cbd5 transparent;
+  scrollbar-gutter: stable;
+  padding: 0 2px 10px 0;
+}
+.app-sidebar > .sidebar-mobile-title { flex-shrink: 0; }
+.app-sidebar > .sidebar-footer {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  padding: 10px 8px 0;
+  border-top: 1px solid #dce2eb;
+  line-height: 1.6;
+}
+.app-sidebar > .sidebar-footer > span { font-size: 11px; color: var(--directory-muted); }
+.app-sidebar .sidebar-section-divider { margin: 10px 8px; border-color: #dde3ec; }
+.app-sidebar .sidebar-chapter { margin: 1px 0; }
+.app-sidebar .sidebar-chapter-row {
+  min-height: 29px;
+  gap: 5px;
+  padding: 1px 5px;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--directory-text);
+}
+.app-sidebar .sidebar-chapter-row > button,
+.app-sidebar .sidebar-lesson-row > button {
+  order: -1;
+  flex: 0 0 18px;
+  height: 24px;
+  width: 18px;
+  margin: 0;
+  padding: 0;
+  color: #7a8493;
+}
+.app-sidebar .sidebar-chapter-row > button > svg,
+.app-sidebar .sidebar-lesson-row > button > svg { width: 12px; height: 12px; }
+.app-sidebar .sidebar-chapter-row > a {
+  min-width: 0;
+  padding: 3px 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--directory-text);
+}
+.app-sidebar .sidebar-chapter-number {
+  width: 12px;
+  height: auto;
+  font-size: 11px;
+  background: none;
+  color: var(--directory-muted);
+}
+.app-sidebar .sidebar-planned-title { font-size: 13px; gap: 6px; line-height: 1.55; color: var(--directory-muted); }
+.app-sidebar .sidebar-planned-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-sidebar .sidebar-planned-title > small { font-size: 10px; color: var(--directory-muted); }
+.app-sidebar .sidebar-chapter-content { padding: 0 0 3px; }
+.app-sidebar .sidebar-children,
+.app-sidebar .sidebar-chapter-content .sidebar-children {
+  margin: 0 0 2px 34px;
+  padding: 0 0 0 10px;
+  border-color: #d8dee7;
+  gap: 0;
+}
+.app-sidebar .sidebar-chapter-content .sidebar-lesson .sidebar-children { margin-left: 48px; }
+.app-sidebar .sidebar-chapter-content .sidebar-children > a {
+  display: block;
+  min-height: 28px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  padding: 4px 6px;
+  margin: 0;
+  border-radius: 4px;
+  color: var(--directory-text);
+}
+.app-sidebar .sidebar-lesson-row {
+  margin: 0 0 0 25px;
+  min-height: 28px;
+  padding: 0 5px;
+  gap: 4px;
+  background: transparent;
+  border-radius: 4px;
+}
+.app-sidebar .sidebar-chapter-content .sidebar-lesson-row > a {
+  padding: 4px 0;
+  color: var(--directory-text);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+}
+.app-sidebar :is(.sidebar-link, .sidebar-saved-link, .sidebar-resume) {
+  min-height: 29px;
+  padding: 4px 8px;
+  color: var(--directory-text);
+  font-size: 13px;
+  line-height: 21px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+.app-sidebar .sidebar-link > svg { width: 14px; height: 14px; }
+.app-sidebar .sidebar-chapter-content > .overview-link { margin: 0 0 0 29px; padding-left: 8px; font-size: 13px; }
+.app-sidebar .sidebar-saved-link { padding-left: 31px; }
+.app-sidebar .sidebar-resume { margin: 6px 0 0; }
+.app-sidebar :is(.sidebar-chapter-row > a, .sidebar-lesson-row > a, .sidebar-children > a) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-sidebar :is(.sidebar-link.active, .sidebar-lesson-row.active, .sidebar-children > a.selected) { background: transparent; color: var(--directory-text); }
+.app-sidebar .sidebar-chapter.chapter-current > .sidebar-chapter-row:not(:has(> a[aria-current="page"])) { background: transparent; }
+.app-sidebar :is(.sidebar-link:hover, .sidebar-chapter-row:hover, .sidebar-lesson-row:hover, .sidebar-children > a:hover) { background: var(--directory-hover); }
+.app-sidebar .sidebar-link[aria-current="page"],
+.app-sidebar .sidebar-chapter-row:has(> a[aria-current="page"]),
+.app-sidebar .sidebar-lesson-row:has(> a[aria-current="page"]),
+.app-sidebar .sidebar-children > a[aria-current="location"] { background: var(--directory-selected); color: #35558b; }
+.app-sidebar :is(a[aria-current="page"], a[aria-current="location"]) { font-weight: 500; }
+.app-sidebar .sidebar-planned-topics { margin: 5px 0 6px 49px; gap: 7px; color: var(--directory-muted); }
+@media (min-width: 901px) { .app-shell { grid-template-columns: 240px minmax(0, 1fr); } }
+@media (max-width: 900px) { .app-sidebar { width: 272px; } }
+@media (hover: none) {
+  .app-sidebar .sidebar-chapter-row,
+  .app-sidebar .sidebar-lesson-row,
+  .app-sidebar .sidebar-chapter-content .sidebar-children > a,
+  .app-sidebar .sidebar-link { min-height: 36px; }
+}
+
+@media (max-width: 1250px) {
+  .reading-layout.course-layout { grid-template-columns: minmax(0, 1fr); }
+  .reading-layout > .article-toc { display: none; }
+}
+@media (max-width: 1050px) {
+  .reading-page, .overview-main.home-focused.reading-page,
+  .reading-layout.course-layout { padding: 28px 32px 56px; }
+  .reading-layout > .reading-page { padding: 0; }
+  .reading-header h1 { font-size: 26px; }
+}
+@media (max-width: 760px) {
+  .reading-page, .overview-main.home-focused.reading-page,
+  .reading-layout.course-layout { padding: 28px 22px 48px; }
+  .reading-layout > .reading-page { padding: 0; }
+  .reading-header h1 { font-size: 25px; }
+  .reading-header { padding-bottom: 0; }
+  .reading-header .reading-lead,
+  .reading-page > :is(.preface-section, .article-section) > p,
+  .reading-page .preface-section-heading p,
+  .reading-page .preface-scope-list { font-size: 15px; }
+  .reading-page > :is(.preface-section, .article-section) { margin-top: 28px; scroll-margin-top: 80px; }
+  .reading-page > :is(.preface-section, .article-section) h2 { font-size: 20px; }
+  .reading-page .preface-purpose-goals { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .reading-page .preface-purpose-goals dd { max-width: none; }
+  .reading-page .preface-usage-links a { flex-wrap: wrap; gap: 6px 12px; }
+  .reading-page .preface-usage-links a > span { flex-basis: calc(100% - 28px); order: 2; }
+  .reading-page .preface-usage-links a > svg { margin-left: auto; }
+}
+@media (max-width: 400px) {
+  .reading-page, .overview-main.home-focused.reading-page,
+  .reading-layout.course-layout { padding: 24px 18px 44px; }
+  .reading-layout > .reading-page { padding: 0; }
+  .reading-header h1 { font-size: 24px; }
+  .reading-page > :is(.preface-section, .article-section) h2 { font-size: 19px; }
+}
