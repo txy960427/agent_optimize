@@ -19,8 +19,9 @@ async function atSection(id) {
   await expect.poll(() => page.locator(`[id="${id}"] :is(h2,h3)`).first().evaluate(el => {
     const top = el.getBoundingClientRect().top;
     const header = document.querySelector('.site-header').getBoundingClientRect().bottom;
-    return top >= header + 18 && top < innerHeight * .65;
-  })).toBe(true);
+    const atBottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+    return top >= header + 18 && (top < innerHeight * .65 || atBottom && top < innerHeight - 48);
+  }), { message: 'Anchor is obscured or not visible: ' + id }).toBe(true);
   assert(await page.locator(`#${id} :is(h2,h3)`).first().evaluate(el => document.activeElement === el), 'Focus did not reach ' + id);
   await expect(page.locator('.app-sidebar a[aria-current="location"]')).toHaveAttribute('href', new RegExp('section=' + id + '$'));
 }
@@ -43,11 +44,13 @@ try {
     openings.push(await page.locator('.reading-header').evaluate(el => {
       const h1 = el.querySelector('h1').getBoundingClientRect();
       const lead = el.querySelector('.reading-lead');
-      return { left: h1.left, top: h1.top, titleSize: getComputedStyle(el.querySelector('h1')).fontSize, summarySize: getComputedStyle(lead).fontSize };
+      return { left: h1.left, summaryLeft: lead.getBoundingClientRect().left, top: h1.top, titleSize: getComputedStyle(el.querySelector('h1')).fontSize, summarySize: getComputedStyle(lead).fontSize };
     }));
     if (['/preface','/learn/runtime','/guide'].includes(route)) await shot('desktop-' + route.split('/').pop() + '.png');
   }
-  assert(openings.every(item => item.left === openings[0].left && item.top === openings[0].top && item.titleSize === openings[0].titleSize && item.summarySize === openings[0].summarySize), 'Chapter openings do not use the same alignment/type scale');
+  // Reading prose is centered in its own measure; diagrams have a wider stage.
+  // Check each title against its own text, with a shared vertical/type scale.
+  assert(openings.every(item => Math.abs(item.left - item.summaryLeft) <= 1 && Math.abs(item.top - openings[0].top) <= 1 && item.titleSize === openings[0].titleSize && item.summarySize === openings[0].summarySize), 'Chapter openings do not align with their reading measure/type scale: ' + JSON.stringify(openings));
 
   await go('/preface');
   const sectionLinks = await page.locator('.app-sidebar a[href*="?section="]').evaluateAll(links => links.map(a => a.getAttribute('href')));
@@ -88,7 +91,7 @@ try {
   assert(navGeometry.scrollHeight > navGeometry.height, 'The long directory did not become scrollable');
   await page.locator('.app-sidebar nav').evaluate(el => { el.scrollTop = el.scrollHeight; });
   await shot('desktop-long-directory.png');
-  await expect(page.locator('.sidebar-saved-link')).toBeInViewport();
+  await expect(page.locator('.practice-link')).toBeInViewport();
   await sidebarDoesNotOverlap();
 
   for (const width of [1920, 1440, 1280, 1024, 900, 768, 390, 320]) {

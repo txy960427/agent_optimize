@@ -7,7 +7,12 @@
     "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
-    "test:e2e": "node ../scripts/pages/real-workspace-check.mjs",
+    "test:unit": "node --test ../scripts/data/message-text.test.mjs ../scripts/data/contract.test.mjs ../scripts/data/decision.test.mjs ../scripts/data/sessions.test.mjs ../scripts/data/practice.test.mjs ../scripts/structure/layout.test.mjs ../scripts/structure/reading-follow.test.mjs",
+    "test:guide": "node ../scripts/pages/outline-core-check.mjs",
+    "test:reading": "node ../scripts/pages/reading-check.mjs",
+    "test:playback": "node ../scripts/pages/playback-lifecycle-check.mjs",
+    "test:layout": "node ../scripts/pages/layout-audit.mjs test-results/layout-after --verify",
+    "test:e2e": "node ../scripts/pages/practice-workspace-check.mjs",
     "test:data": "node ../scripts/data/export-data-check.mjs"
   },
   "dependencies": {

@@ -37,7 +37,7 @@
 
 - 新版：`http://127.0.0.1:4173/#/`。
 - 旧版：`http://127.0.0.1:4173/#/?version=v06`。
-- 旧页面组件：`web/src/HomeV06.tsx`；原有`guide.css`保留。
+- 旧页面组件：`web/src/pages/home/HomeV06.tsx`；原有`guide.css`保留。
 - 修改前快照已于 2026-11-26 移出仓库，原包包含当时的源码、构建产物及设计文档，`manifest.json`记录46个文件的SHA256，全部核对通过。
 - 还原操作见备份中的`BACKUP.md`；预览旧首页无需还原文件。
 

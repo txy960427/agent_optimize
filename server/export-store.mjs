@@ -2,24 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { contentText, messagesOf, roleOf } from './message-text.mjs';
+export { contentText, messagesOf, roleOf };
 
 export const defaultDataDirectory=fileURLToPath(new URL('../data/',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const str=value=>typeof value==='string'?value:JSON.stringify(value)??'';
 const clip=(value,max=900)=>value.length>max?value.slice(0,max)+'…':value;
-export function roleOf(message){const role=message?.role??message?.type??message?.kwargs?.type??'';if(['user','human','HumanMessage'].includes(role)||message?.id?.at?.(-1)==='HumanMessage')return 'user';if(['assistant','ai','AIMessage'].includes(role)||message?.id?.at?.(-1)==='AIMessage')return 'assistant';return role;}
-export function contentText(value){
- if(value==null)return '';if(typeof value==='string')return value;
- if(Array.isArray(value))return value.map(contentText).filter(Boolean).join('\n');
- if(typeof value==='object'){
-  if(value.kwargs&&'content'in value.kwargs)return contentText(value.kwargs.content);
-  if(value.data&&'content'in value.data)return contentText(value.data.content);
-  if('text'in value)return contentText(value.text);
-  if('content'in value)return contentText(value.content);
-  return str(value);
- }return String(value);
-}
-export function messagesOf(value){return Array.isArray(value)?value:Array.isArray(value?.messages)?value.messages:[];}
 function latest(value,role){const messages=messagesOf(value);for(let i=messages.length-1;i>=0;i--){const m=messages[i];if(roleOf(m)===role){const text=contentText(m.content??m.kwargs?.content??m.data?.content);if(text.trim())return text.trim();const calls=m.tool_calls??m.kwargs?.tool_calls;if(calls?.length)return '工具调用：'+calls.map(c=>c.name??c.function?.name??'未命名').join('、');}}return typeof value==='string'?value:'';}
 function timestamp(o){return new Date(o.startTime??0).getTime()||0;}
 export function mapTrace(trace){
@@ -80,7 +69,7 @@ export function createExportStore(dataDirectory=defaultDataDirectory){
    cached={records,summaries,cases,manifest};signature=nextSignature;return cached;
   })();try{return await pending}finally{pending=undefined}
  }
- async function list(query){
+ async function list(query,all=false){
   const store=await load();const q=(query.get('q')??'').trim().toLowerCase();const mode=query.get('mode')??'keyword';const scope=query.get('scope')??'summary';const selectedCase=query.get('case');const from=query.get('from');const to=query.get('to');const status=query.get('status');let hits=new Map();
   const items=store.summaries.filter(summary=>{
    if(selectedCase&&!summary.caseIds.includes(selectedCase))return false;
@@ -94,8 +83,20 @@ export function createExportStore(dataDirectory=defaultDataDirectory){
    for(const [field,value]of fields){const text=str(value);const index=text.toLowerCase().indexOf(q);if(index>=0){hits.set(summary.id,{field,snippet:(index>60?'…':'')+text.slice(Math.max(0,index-60),index+q.length+100)+(index+q.length+100<text.length?'…':'')});return true;}}return false;
   });
   const finite=(value,fallback)=>Number.isFinite(Number(value))&&Number(value)>0?Math.floor(Number(value)):fallback;const pageSize=Math.min(30,finite(query.get('pageSize'),15));const pages=Math.max(1,Math.ceil(items.length/pageSize));const page=Math.min(pages,finite(query.get('page'),1));
-  return {items:items.slice((page-1)*pageSize,page*pageSize).map(t=>({...t,match:hits.get(t.id)})),total:items.length,page,pageSize,pages,manifest:store.manifest,cases:store.cases.map(({analysis,...c})=>c),coverage:{scope:scope==='all'?'Trace与全部Observation的名称、输入、输出和状态信息':'Trace的名称、原始输入与原始输出',scanned:store.summaries.length,timezone:'Asia/Shanghai'}};
+  return {items:(all?items:items.slice((page-1)*pageSize,page*pageSize)).map(t=>({...t,match:hits.get(t.id)})),total:items.length,page,pageSize,pages,manifest:store.manifest,cases:store.cases.map(({analysis,...c})=>c),coverage:{scope:scope==='all'?'Trace与全部Observation的名称、输入、输出和状态信息':'Trace的名称、原始输入与原始输出',scanned:store.summaries.length,timezone:'Asia/Shanghai'}};
  }
+ async function sessions(query){
+  const store=await load(),normalized=new URLSearchParams(query),q=(query.get('q')??'').trim();
+  if((query.get('mode')??'auto')==='auto')normalized.set('mode',/^(?:[\da-f]{32}|[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})$/i.test(q)?'session':'keyword');
+  normalized.set('scope','all');const matches=await list(normalized,true),hits=new Map(matches.items.map(t=>[t.id,t]));
+  const groups=new Map();for(const t of store.summaries){const key=t.sessionId?'session:'+t.sessionId:'trace:'+t.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(t);}
+  const items=[...groups.values()].filter(rows=>rows.some(t=>hits.has(t.id))).filter(rows=>normalized.get('mode')==='session'&&!!q||query.get('group')!=='unassigned'||!rows[0].sessionId).filter(rows=>normalized.get('mode')==='session'&&!!q||query.get('group')!=='sessions'||!!rows[0].sessionId).map(rows=>{
+   const ordered=[...rows].sort((a,b)=>a.startTime.localeCompare(b.startTime)),matched=ordered.filter(t=>hits.has(t.id));return {id:rows[0].sessionId||rows[0].id,sessionId:rows[0].sessionId||null,traceCount:rows.length,input:ordered[0].input,latest:rows[0].startTime,errorCount:rows.reduce((n,t)=>n+t.errorCount,0),matched:matched.map(t=>({id:t.id,input:t.input,match:hits.get(t.id)?.match})),caseIds:[...new Set(rows.flatMap(t=>t.caseIds))]};
+  }).sort((a,b)=>b.latest.localeCompare(a.latest));
+  const pageSize=Math.min(30,Math.max(1,Math.floor(Number(query.get('pageSize')))||15)),pages=Math.max(1,Math.ceil(items.length/pageSize)),page=Math.min(pages,Math.max(1,Math.floor(Number(query.get('page')))||1));
+  return {items:items.slice((page-1)*pageSize,page*pageSize),total:items.length,page,pages,manifest:store.manifest,cases:matches.cases,coverage:matches.coverage};
+ }
+ async function session(id){const store=await load(),traces=store.summaries.filter(t=>t.sessionId===id&&id).sort((a,b)=>a.startTime.localeCompare(b.startTime));return traces.length?{id,traces,coverage:'当前导出中的完整会话；不代表内网全部运行'}:null;}
  async function detail(id){const store=await load();const entry=store.records.get(id);if(!entry)return null;const t=entry.raw;const summary=store.summaries.find(x=>x.id===id);return {...summary,rawInput:t.input,rawOutput:t.output,observations:t.observations,loops:entry.mapping.loops,requestId:entry.mapping.requestIds[0]??entry.mapping.containerIds[0]??'',deliveryId:entry.mapping.deliveryIds.at(-1)??entry.mapping.containerIds[0]??'',mapping:entry.mapping,source:{version:store.manifest.version,fingerprint:entry.fingerprint,origins:entry.origins,observationCount:t.observationCount??null,platform:'Langfuse JSON导出'},related:summary.sessionId?store.summaries.filter(x=>x.sessionId===summary.sessionId&&x.id!==id):[],caseReferences:store.cases.filter(c=>c.traceIds.includes(id))};}
  async function guideExample(){
   const store=await load();const c=store.cases.find(item=>item.file.includes('tool-arg-mismatch'));
@@ -107,5 +108,5 @@ export function createExportStore(dataDirectory=defaultDataDirectory){
    }
   }return null;
  }
- return {load,list,detail,guideExample};
+ return {load,list,sessions,session,detail,guideExample};
 }

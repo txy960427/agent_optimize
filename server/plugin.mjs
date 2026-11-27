@@ -9,6 +9,8 @@ export function localDataPlugin(){
    const route=url.pathname.slice('/api/local-data/'.length);let result;
    if(route==='manifest')result=(await store.load()).manifest;
    else if(route==='traces')result=await store.list(url.searchParams);
+   else if(route==='sessions')result=await store.sessions(url.searchParams);
+   else if(/^sessions\/[^/]+$/.test(route)){result=await store.session(decodeURIComponent(route.split('/')[1]));if(!result){res.statusCode=404;result={error:'当前导出中没有这个Session。'};}}
    else if(route==='cases')result=(await store.load()).cases;
    else if(route==='guide-example'){result=await store.guideExample();if(!result){res.statusCode=404;result={error:'导出中暂时没有可呈现的工具参数案例。'};}}
    else if(/^traces\/[^/]+(?:\/raw)?$/.test(route)){

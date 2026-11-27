@@ -5,6 +5,8 @@
 - `export-store.mjs`：按 Trace ID 去重，生成列表和详情。
 - `plugin.mjs`：提供 `GET /api/local-data/`。
 
+v3 增加 `GET /api/local-data/sessions` 和 `GET /api/local-data/sessions/:id`：默认先选会话，再选 Trace。筛选命中会话时仍保留其全部导出轮次；缺失 Session 的 Trace 独立返回，完整 ID 可精确查找。既有 Trace 详情接口保持不变。
+
 数据目录固定为仓库根的 `data/`。这三个导出文件不进入 Git，换机器时自行放到该目录：
 
 - `traces.json`

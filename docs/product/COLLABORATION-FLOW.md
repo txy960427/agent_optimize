@@ -31,7 +31,7 @@
 
 ## 实现与检查
 
-组件：[CollaborationFlow.tsx](../../web/src/CollaborationFlow.tsx)，样式：[collaboration-flow.css](../../web/src/collaboration-flow.css)。复用React Flow及现有图标、弹窗能力，无新依赖。
+组件：[CollaborationFlow.tsx](../../web/src/pages/preface/CollaborationFlow.tsx)，样式：[collaboration-flow.css](../../web/src/styles/collaboration-flow.css)。复用React Flow及现有图标、弹窗能力，无新依赖。
 
 `scripts/pages/sop-flow-check.mjs`覆盖8条责任映射、3种上报来源、反馈返回、播放/暂停/逐步、键盘选中、减少动态效果、视口外暂停、原图对照，以及1440/1024/768/390/320px表头单行与整页无横向溢出。`reading-check.mjs`继续覆盖43个阅读锚点与目录定位。
 

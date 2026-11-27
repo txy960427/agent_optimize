@@ -8,6 +8,14 @@ const page=await browser.newPage({viewport:{width:1440,height:1040},reducedMotio
 const errors=[];page.on('pageerror',error=>errors.push(String(error)));
 const go=route=>page.goto('http://127.0.0.1:4173/#'+route,{waitUntil:'networkidle'});
 const shot=name=>page.screenshot({path:path.join(output,name)});
+async function matchesBackgroundToken(locator,token){
+ const colors=await locator.evaluate((el,name)=>{
+  const probe=document.createElement('span');probe.style.color=`var(${name})`;el.append(probe);
+  const expected=getComputedStyle(probe).color;probe.remove();
+  return {actual:getComputedStyle(el).backgroundColor,expected};
+ },token);
+ assert.equal(colors.actual,colors.expected);
+}
 try{
  await go('/');
  await expect(page.locator('link[rel=icon]')).toHaveAttribute('href','/guide-mark.svg');
@@ -31,13 +39,13 @@ try{
  await go('/preface');
  const breadcrumb=page.getByRole('navigation',{name:'当前位置',exact:true});
  await expect(breadcrumb.locator('[aria-current=page]')).toContainText('第 0 章');
- assert.equal(await breadcrumb.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(234, 240, 252)');
+ await matchesBackgroundToken(breadcrumb,'--primary-wash');
  await shot('preface-after.png');
  await go('/preface?section=chapter-guide');
- assert.equal(await page.locator('#chapter-guide thead th').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(233, 238, 248)');
+ await matchesBackgroundToken(page.locator('#chapter-guide thead th').first(),'--table-heading');
  await shot('table-after.png');
  await go('/cases');await page.locator('.rc-table tbody tr').first().waitFor();
- assert.equal(await page.locator('.rc-table thead th').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(233, 238, 248)');
+ await matchesBackgroundToken(page.locator('.rc-table thead th').first(),'--table-heading');
  await expect(page.locator('.rc-table tr.is-selected')).toHaveCount(1);
  await shot('cases-after.png');
  // Call the application's print command without opening an interactive system dialog.

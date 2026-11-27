@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createExportStore } from '../../server/export-store.mjs';
+import { manifestFields } from '../../shared/local-data-fields.mjs';
 const store=createExportStore();const data=await store.load();
+assert.deepEqual(Object.keys(data.manifest).sort(), [...manifestFields].sort());
 assert.equal(data.manifest.traceCount,100);assert.equal(data.manifest.observationCount,2151);assert.equal(data.manifest.sessionCount,34);assert.equal(data.manifest.conflicts.length,0);assert.equal(data.cases.length,2);
 let loops=0,primaryModels=0,unclassified=0;
 for(const entry of data.records.values()){

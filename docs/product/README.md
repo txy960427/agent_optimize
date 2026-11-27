@@ -1,6 +1,12 @@
 # 智能体调优技术指南 · 产品设计文档
 
-当前完整定位见[POSITIONING.md](POSITIONING.md)，当前两版首页见[HOME-V12.md](HOME-V12.md)。指南为医疗设备智能体提供调优方向、技术方法与内部案例指导。首页2展示完整问题驱动闭环，前言原文与理解见[读取档案](PREFACE-READING-NOTES.md)。前言确立四项目标、三种使用路径与环境归因边界；架构知识与实操都是其中的内容。
+2026-11-26 实操 v3 已接入正式站点：Session 分组、步骤输入输出、候选步骤确认、完整决策图和历史抽屉。当前实现及边界见 [PRACTICE-INTEGRATION-V3.md](PRACTICE-INTEGRATION-V3.md)，覆盖下文 v0.9 的实操布局描述。
+
+2026-11-26全局布局与配色以[LAYOUT-AUDIT.md](LAYOUT-AUDIT.md)及根目录DESIGN.md当前规则为准，覆盖早期页面宽度与颜色记录。两版首页、阅读版心、表格、导航断点和强调色统一管理。
+
+2026-11-26最新总纲与代码修复见[OUTLINE-CORE-V13.md](OUTLINE-CORE-V13.md)和[REFACTOR-FOLLOWUP.md](REFACTOR-FOLLOWUP.md)。当前以`web`、`server`、`shared`分层源码及根README为运行依据。
+
+当前完整定位见[POSITIONING.md](POSITIONING.md)，当前两版首页见[HOME-V12.md](HOME-V12.md)。指南为医疗设备智能体提供调优方向、技术方法与内部案例指导。当前首页1展示完整问题驱动闭环，首页2为书册；首页与实操默认收起全书目录，左侧半圆柄可覆盖展开。前言原文与理解见[读取档案](PREFACE-READING-NOTES.md)。前言确立四项目标、三种使用路径与环境归因边界；架构知识与实操都是其中的内容。
 
 版本：v0.9 · 2026-11-25。依据实际前言校正全链路指南定位，保留两版首页，调优总纲独立为第1章，七章结构与内容状态统一到固定目录；实操已接入本地Langfuse实际导出，实时服务接入另行核对，见[REAL-DATA-WORKSPACE.md](REAL-DATA-WORKSPACE.md)。当前视觉以[VISUAL-RESET.md](VISUAL-RESET.md)及新原型为准。
 
