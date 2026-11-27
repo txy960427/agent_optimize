@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { BaseEdge, Handle, Position, ReactFlow, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeProps } from '@xyflow/react';
 import { Maximize2, Pause, Play, RotateCcw, SkipForward } from 'lucide-react';
@@ -33,7 +33,7 @@ const nodePositions:Record<string,[number,number,number,number]>={
   llm:[718,400,154,56],speech:[718,466,154,56],embedding:[718,532,154,56],specialist:[718,608,154,56],
   engineering:[914,48,148,56],'application-team':[914,124,148,56],'framework-team':[914,224,148,56],
   'agent-plugin':[914,300,148,56],'model-team':[914,466,148,56],'agent-specialist':[914,608,148,56],
-  feedback:[390,716,220,34],
+  feedback:[347,716,220,34],
 };
 
 function SopNode({id,data}:NodeProps<FlowNode>){
@@ -45,7 +45,7 @@ function SopNode({id,data}:NodeProps<FlowNode>){
 function SopEdge({id,sourceX,sourceY,targetX,targetY,sourcePosition,targetPosition,markerEnd,data}:EdgeProps<FlowEdge>){
   let path=getSmoothStepPath({sourceX,sourceY,targetX,targetY,sourcePosition,targetPosition,borderRadius:8,offset:18})[0];
   if(data?.kind==='feedback')path=`M${sourceX} ${sourceY}H1084Q1092 ${sourceY} 1092 ${sourceY+8}V726Q1092 733 1084 733H${targetX}`;
-  if(data?.kind==='return')path=`M${sourceX} ${sourceY}H457V${targetY}`;
+  if(data?.kind==='return')path=`M${sourceX} ${sourceY}V${targetY}`;
   const ink=data?.current?'#3d70bf':data?.chosen?'#809ac1':'#cbd3df';
   return <><BaseEdge id={id} path={path} markerEnd={markerEnd} style={{stroke:ink,strokeWidth:data?.chosen?1.8:1.2}}/>{data?.current&&data.playing&&<circle className="sop-flow-signal" r={3.5} fill="#4263cf"><animateMotion path={path} dur="1.5s" repeatCount="indefinite"/></circle>}</>;
 }
@@ -56,9 +56,15 @@ export function CollaborationFlow(){
   const [step,setStep]=useState(0);const reduced=useReducedMotion();
   const [playing,setPlaying]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const surface=useRef<HTMLElement>(null);const [visible,setVisible]=useState(false);
+  const canvasSurface=useRef<HTMLDivElement>(null);const [canvasScale,setCanvasScale]=useState(1);
   const route=routes.find(item=>item.id===routeId)!;
   const path=[origin,'report-'+origin,'analysis',route.category,route.id,route.owner,'feedback'];
   useEffect(()=>{if(reduced)setPlaying(false)},[reduced]);
+  useEffect(()=>{
+    const element=canvasSurface.current;if(!element)return;
+    const observer=new ResizeObserver(([entry])=>setCanvasScale(entry.contentRect.width/1120));
+    observer.observe(element);return()=>observer.disconnect();
+  },[]);
   useEffect(()=>{const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'80px'});if(surface.current)observer.observe(surface.current);return()=>observer.disconnect()},[]);
   useEffect(()=>{if(!playing||!visible||reduced)return;const timer=setInterval(()=>setStep(value=>(value+1)%7),1800);return()=>clearInterval(timer)},[playing,visible,reduced]);
   function pickRoute(id:RouteId){setRouteId(id);setStep(3);setPlaying(false)}
@@ -72,7 +78,7 @@ export function CollaborationFlow(){
     else if(id==='feedback'){label='问题情况反馈';caption='';tone='feedback'}
     else if(id in ownerNames){label=ownerNames[id];caption='责任团队';tone=id.startsWith('agent-')?'agent':'team';onPick=()=>{const selected=route.owner===id?route:routes.find(item=>item.owner===id)!;pickRoute(selected.id);setStep(5)}}
     else{const item=routes.find(item=>item.id===id)!;label=item.label;caption=item.caption;tone='branch';onPick=()=>{pickRoute(item.id);setStep(4)}}
-    return {id,type:'sop',position:{x,y},style:{width,height},draggable:false,connectable:false,focusable:false,data:{label,caption,tone,chosen:path.includes(id),current:path[step]===id,onPick}};
+    return {id,type:'sop',position:{x,y},style:{width,height},zIndex:2,draggable:false,connectable:false,focusable:false,data:{label,caption,tone,chosen:path.includes(id),current:path[step]===id,onPick}};
   }),[origin,routeId,step]);
   const edges=useMemo<FlowEdge[]>(()=>{
     const links:{source:string;target:string;sourceHandle?:string;targetHandle?:string;kind?:'feedback'|'return'}[]=[];
@@ -84,7 +90,7 @@ export function CollaborationFlow(){
     return links.map(link=>{
       const chosen=path.includes(link.source)&&path.includes(link.target);
       const current=chosen&&(path[step]===link.source||link.kind==='return'&&step===6);
-      return {...link,id:link.source+'-'+link.target,type:'sop',zIndex:chosen?2:0,data:{chosen,current,playing:playing&&visible&&!reduced,kind:link.kind},markerEnd:{type:'arrowclosed' as const,width:14,height:14,color:chosen?'#809ac1':'#cbd3df'}};
+      return {...link,id:link.source+'-'+link.target,type:'sop',zIndex:chosen?1:0,data:{chosen,current,playing:playing&&visible&&!reduced,kind:link.kind},markerEnd:{type:'arrowclosed' as const,width:14,height:14,color:chosen?'#809ac1':'#cbd3df'}};
     });
   },[origin,routeId,step,playing,visible,reduced]);
   const explanations=[
@@ -100,7 +106,7 @@ export function CollaborationFlow(){
   return <figure ref={surface} className="collaboration-flow" aria-label="内部协作SOP交互流程图">
     <div className="sop-toolbar"><div className="sop-route-fields"><label>问题来源<select aria-label="问题来源" value={origin} onChange={event=>pickOrigin(event.target.value as Origin)}>{Object.entries(origins).map(([id,item])=><option key={id} value={id}>{item.label}</option>)}</select></label><label>分配路线<select aria-label="分配路线" value={routeId} onChange={event=>pickRoute(event.target.value as RouteId)}>{['运行环境问题','Harness问题','模型问题'].map(layer=><optgroup key={layer} label={layer}>{routes.filter(item=>item.layer===layer).map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</optgroup>)}</select></label></div><div className="sop-playback"><button onClick={()=>setPlaying(value=>!value)} aria-label={playing?'暂停协作路线':'播放协作路线'} aria-pressed={playing}>{playing?<Pause size={14}/>:<Play size={14}/>}<span>{playing?'暂停':'播放'}</span></button><button aria-label="下一步协作" onClick={()=>{setPlaying(false);setStep(value=>(value+1)%7)}}><SkipForward size={15}/></button><button aria-label="重置协作路线" onClick={()=>{setPlaying(false);setStep(0)}}><RotateCcw size={14}/></button></div></div>
     <div className="sop-scroll-hint">左右滑动查看完整流程，点击分支可切换路线。</div>
-    <div className="sop-scroll-region" role="region" aria-label="协作路线画布" tabIndex={0}><div className="sop-canvas"><div className="sop-column-headings" aria-hidden="true"><span>问题的发现</span><span>问题的上报</span><span>分析与界定</span><span>定位与分配</span><span>解决与反馈</span></div><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} defaultViewport={{x:0,y:0,zoom:1}} minZoom={1} maxZoom={1} nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} elementsSelectable={false} panOnDrag={false} zoomOnScroll={false} zoomOnPinch={false} zoomOnDoubleClick={false} preventScrolling={false}/></div></div>
+    <div ref={canvasSurface} className="sop-scroll-region" role="region" aria-label="协作路线画布" tabIndex={0}><div className="sop-canvas" style={{"--sop-scale":canvasScale} as CSSProperties}><div className="sop-column-headings" aria-hidden="true"><span>问题的发现</span><span>问题的上报</span><span>分析与界定</span><span>定位与分配</span><span>解决与反馈</span></div><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} viewport={{x:0,y:0,zoom:canvasScale}} minZoom={0.1} maxZoom={1} nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} elementsSelectable={false} panOnDrag={false} zoomOnScroll={false} zoomOnPinch={false} zoomOnDoubleClick={false} preventScrolling={false}/></div></div>
     <figcaption className="sop-current-step" aria-live={playing?'off':'polite'}><span>{stages[step]}</span><p>{explanations[step]}</p></figcaption>
     <div className="sop-footer"><span>协作路线示意 · 按原图职责分流</span><Modal title="内部协作 SOP（原图）" description="保留提供的原图，便于对照协作流程与责任分配。" trigger={<button className="preface-figure-open"><Maximize2 size={13}/>查看原图</button>}><div className="preface-image-detail"><img src="/images/internal-collaboration-sop.png" alt="内部协作SOP原图" width={1100} height={627}/></div></Modal></div>
     <details className="sop-text-alternative"><summary>查看责任分配文字版</summary><table className="simple-table"><thead><tr><th scope="col">问题层级</th><th scope="col">定位对象</th><th scope="col">责任团队</th></tr></thead><tbody>{routes.map(item=><tr key={item.id}><td>{item.layer}</td><td>{item.label}</td><td>{ownerNames[item.owner]}</td></tr>)}</tbody></table><p>各责任团队处理后，将问题情况反馈至小U主owner与AIC智能体团队。</p></details>

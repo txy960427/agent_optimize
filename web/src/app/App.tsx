@@ -1,9 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
 import { ArrowUpRight, ChevronRight, Menu, X, CircleHelp, Check, Info } from 'lucide-react';
-import { Home } from '../pages/home/Home';
 import { GuideMark } from '../components/GuideMark';
 import { GuideTools } from './GuideTools';
-import { HomeV06 } from '../pages/home/HomeV06';
 import { HomeAtlas } from '../pages/home/HomeAtlas';
 import { OutlineOverview } from '../pages/guide/OutlineOverview';
 import { Preface } from '../pages/preface/Preface';
@@ -58,7 +56,7 @@ export function App(){
  <div onClick={repeatNavigation} className={`app-shell ${overlayNavigation?'navigation-overlay':''} ${isPractice?'practice-shell':''} ${menu?'nav-open':''}`}>
  {overlayNavigation&&<button ref={edgeTrigger} className="navigation-peek" hidden={menu} aria-label="展开全书目录" aria-controls="guide-sidebar" aria-expanded={menu} title="展开全书目录" onClick={()=>setMenu(true)}><ChevronRight size={17}/></button>}
  <Sidebar triggerRef={overlayNavigation?edgeTrigger:mobileTrigger} route={route} open={menu} onClose={()=>setMenu(false)} returnTo={returnTo}/><div className="app-content" inert={menu}>
- {page==='home'&&(params.get('home')==='3'?<HomeAtlas go={go} concept={params.get('concept')??undefined} compare={params.get('compare')==='1'}/>:((params.get('home')==='1'||params.get('version')==='v06')?<Home go={go}/>:<HomeV06 go={go}/>))}
+ {page==='home'&&<HomeAtlas go={go}/>}
  {page==='preface'&&<Preface go={go}/>}
  {page==='guide'&&<OutlineOverview selectedObject={selectedObject} setSelectedObject={setSelectedObject} go={go} onLearn={learn}/>}
  {page==='learn'&&<Course key={parts[1]} id={parts[1]??'runtime'} sectionId={params.get('section')??undefined} go={go} returnTo={returnTo}/>}

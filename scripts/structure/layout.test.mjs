@@ -9,7 +9,7 @@ const read = (file) => fs.readFile(path.join(root, file), 'utf8');
 
 const pages = [
   'web/src/app/App.tsx',
-  'web/src/pages/home/Home.tsx',
+  'web/src/pages/home/HomeAtlas.tsx',
   'web/src/pages/preface/Preface.tsx',
   'web/src/pages/guide/OutlineOverview.tsx',
   'web/src/pages/learn/Course.tsx',

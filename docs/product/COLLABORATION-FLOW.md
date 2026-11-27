@@ -36,3 +36,20 @@
 `scripts/pages/sop-flow-check.mjs`覆盖8条责任映射、3种上报来源、反馈返回、播放/暂停/逐步、键盘选中、减少动态效果、视口外暂停、原图对照，以及1440/1024/768/390/320px表头单行与整页无横向溢出。`reading-check.mjs`继续覆盖43个阅读锚点与目录定位。
 
 修改前快照已于 2026-11-26 移出仓库。前言标题与目录同时去掉编号；正文与表格行宽不再共用窄的中文段落宽度。
+
+## 连线局部修正（2026-11-27）
+
+### Direction contract
+
+THESIS：连线准确接到框边，不覆盖文字；保留原图的分流、职责与反馈关系。
+OWN-WORLD：沿用现有蓝灰节点、直角圆弯连接与流动信号，不改图形布局和页面主题。
+STORY：选择来源与分支 → 清楚跟随交接 → 看到责任团队 → 经外侧反馈回到共同界定。
+FIRST VIEWPORT：保持五列与图下说明；只统一缩放坐标、线的层级和反馈通道。
+FORM：seed: none (pinned)。用户要求“这个线看起来错乱 而且有的覆盖了框的文字内容。你微调一下”。
+FINISH：unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+实现将1120×770逻辑坐标的缩放交给React Flow受控viewport，ResizeObserver按可用宽度更新zoom；移除图外层CSS transform，避免端口坐标被重复缩放。阶段标题单独同步同一比例，节点层级为2、选中连线为1、其他连线为0，高亮与信号仍在节点下层。反馈标记移到共同界定节点正下方，回程从下侧端口垂直进入；责任团队通过右侧外部通道进入反馈。
+
+检查：构建通过；一次机械设计检查无发现。实际浏览器按曲线取样，在1440/1024/390px下连线均未进入任何节点内部，25节点保留且无整页横向溢出，结果为 `.impeccable/review/sop-connectors/geometry.json`。原SOP检查脚本已通过其前半段的8条映射、3种来源、反馈、播放、视口外暂停、键盘、减少动态及原图对照；随后在既有全前言表格的单行样式断言处失败（sop-flow-check.mjs:53），该表格规则不在本次改动范围，没有修改它或把整套检查写成通过。
+
+连线复核初轮要求保留选中反馈通道的高亮层次，现以节点2 / 选中线1 / 其余线0修正。实际SVG层级记录在 `layers.json`，同路径截图已更新；复核者对该项修正评分resolved，disposition: ship，判定范围为反馈高亮修正。全局设计文件和其他页面未因本次修正而修改。

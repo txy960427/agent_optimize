@@ -1,5 +1,7 @@
 # 开源组件选型建议
 
+2026-11-27：首页统一为原首页3主线地图，章节区复用原首页2的`GuideCatalog cards`，不再展示三标准样张、案例介绍或多版本入口。地图的Motion交互与共享章节卡片响应式保持，详见[当前首页规范](HOME3-PREVIEW.md)。
+
 状态：首页内容v0.12，其余选型延续v0.6，官方资料核对日期2026-11-25。2026-11-26全局布局与颜色令牌见[LAYOUT-AUDIT.md](LAYOUT-AUDIT.md)：首页SOP采用横向阶段路线与同宽场景，阅读表格与正文对齐，目录在1099px以下收为抽屉。当前使用React + TypeScript + Vite、React Flow与Radix UI；实际数据结果采用语义表格和服务端分页，TanStack保留为依赖候选；Motion用于讲解状态与浮窗过渡，依赖版本见web/package.json和锁文件。
 
 ## 1. 先判断信息形态，再选组件

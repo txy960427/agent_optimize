@@ -8,7 +8,7 @@ await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
 const pages = [
-  ['home1', '/?home=1'], ['home2', '/?home=2'],
+  ['home', '/'],
   ['preface', '/preface?section=internal'], ['course', '/learn/context'], ['cases', '/cases'],
   ['outline', '/guide'], ['decision', '/learn/decisions?section=route'],
 ];
@@ -29,9 +29,9 @@ for (const size of [{width:1920,height:1080},{width:1440,height:900},{width:1366
       };
       return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
         header: box('.site-header'), sidebar: box('.app-sidebar'), main: box('#main'),
-        hero: box('.home-split-hero, .home-book-hero'), copy: box('.home-hero-message'),
-        actions: box('.home-entry-actions'), jump: box('.catalog-jump'),
-        preview: box('.home-sop-preview, .guide-cover-scene'), spread: box('.guide-reading-spread'),
+        hero: box('.atlas-hero'), copy: box('.atlas-message'),
+        actions: box('.atlas-actions'), jump: box('.atlas-catalog-jump'),
+        preview: box('.hero-concepts'), spread: box('.chapter-index-cards'),
         prose: box('#internal > p'), table: box('#internal .preface-table-region'),
       };
     });
@@ -55,7 +55,7 @@ if (process.argv.includes('--verify')) {
       assert(Math.abs(report.prose.x-report.table.x) <= 1, `${key}: table and prose have different left edges`);
       assert(Math.abs(report.prose.width-report.table.width) <= 1, `${key}: table extends outside reading column`);
     }
-    if (report.width >= 1100 && !['home1','home2','cases'].includes(report.name)) {
+    if (report.width >= 1100 && !['home','cases'].includes(report.name)) {
       assert(report.sidebar.width >= 224 && report.sidebar.width <= 240, `${key}: desktop reading sidebar width`);
     } else assert(report.sidebar.visibility === 'hidden', `${key}: sidebar occupies home, investigation or small screen`);
   }
@@ -83,7 +83,7 @@ if (process.argv.includes('--verify')) {
   assert.equal(await page.locator('.app-content').getAttribute('inert'),null,'Desktop content remains inert after resize');
   for (const width of [1440,390]) {
     await page.setViewportSize({width,height:width===1440?900:844});
-    for(const route of ['/?home=1','/?home=2','/cases']) {
+    for(const route of ['/','/cases']) {
       await page.goto('http://127.0.0.1:4173/#'+route);
       const peek=page.getByRole('button',{name:'展开全书目录',exact:true});
       await peek.waitFor();

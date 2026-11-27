@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "motion/react";
 import {
   ReactFlow,
   Background,
@@ -16,6 +15,7 @@ import {
   type NodeProps,
   type Edge,
   type ReactFlowInstance,
+  type Viewport,
 } from "@xyflow/react";
 import {
   BrainCircuit,
@@ -41,7 +41,10 @@ import {
 } from "lucide-react";
 import { objects, objectById } from "../../domain/data";
 import { Button, Modal } from "../../components/ui";
-import { usePlaybackVisibility, useReducedMotionPreference } from "../../components/usePlaybackVisibility";
+import {
+  usePlaybackVisibility,
+  useReducedMotionPreference,
+} from "../../components/usePlaybackVisibility";
 
 type MapData = {
   label: string;
@@ -72,10 +75,10 @@ const icons: Record<string, typeof BrainCircuit> = {
   evaluation: FlaskConical,
 };
 const supportRelations: Record<string, string[]> = {
-  support: ["model", "harness", "environment"],
-  collaboration: ["model", "harness", "environment"],
+  support: ["system", "model", "harness", "environment"],
+  collaboration: ["model", "harness"],
   personalization: ["model", "harness", "prompt", "memory"],
-  evaluation: ["model", "harness", "environment"],
+  evaluation: ["system", "model", "harness", "environment"],
 };
 const stages = [
   {
@@ -101,7 +104,7 @@ const stages = [
   {
     id: "collaboration",
     title: "跨对象协同改进",
-    detail: "联合调整模型、Harness和环境的配合方式。",
+    detail: "先分别验证模型与Harness，单侧遇到瓶颈后再评估联合调整。",
   },
   {
     id: "personalization",
@@ -111,7 +114,7 @@ const stages = [
   {
     id: "evaluation",
     title: "测评与数据回流",
-    detail: "对照效果、积累样本，为下一轮改进提供依据。",
+    detail: "验证整套系统的任务效果，积累样本，为下一轮改进提供依据。",
   },
 ];
 const specs: {
@@ -123,8 +126,9 @@ const specs: {
   parent?: string;
   group?: boolean;
 }[] = [
-  { id: "model", x: 12, y: 26, w: 228, h: 218, group: true },
-  { id: "harness", x: 360, y: 26, w: 300, h: 218, group: true },
+  { id: "system", x: 0, y: 0, w: 684, h: 448, group: true },
+  { id: "model", x: 12, y: 46, w: 228, h: 218, group: true },
+  { id: "harness", x: 360, y: 46, w: 300, h: 218, group: true },
   { id: "selection", x: 16, y: 54, w: 196, h: 42, parent: "model" },
   { id: "training", x: 16, y: 106, w: 196, h: 42, parent: "model" },
   { id: "quantization", x: 16, y: 158, w: 196, h: 42, parent: "model" },
@@ -133,11 +137,11 @@ const specs: {
   { id: "tool", x: 16, y: 106, w: 126, h: 42, parent: "harness" },
   { id: "memory", x: 158, y: 106, w: 126, h: 42, parent: "harness" },
   { id: "architecture", x: 16, y: 158, w: 268, h: 42, parent: "harness" },
-  { id: "environment", x: 12, y: 302, w: 648, h: 108, group: true },
+  { id: "environment", x: 12, y: 322, w: 648, h: 108, group: true },
   { id: "sandbox", x: 16, y: 50, w: 196, h: 42, parent: "environment" },
   { id: "monitoring", x: 226, y: 50, w: 196, h: 42, parent: "environment" },
   { id: "safety", x: 436, y: 50, w: 196, h: 42, parent: "environment" },
-  { id: "support", x: 12, y: 438, w: 648, h: 108, group: true },
+  { id: "support", x: 12, y: 482, w: 648, h: 108, group: true },
   { id: "collaboration", x: 16, y: 50, w: 196, h: 42, parent: "support" },
   { id: "personalization", x: 226, y: 50, w: 196, h: 42, parent: "support" },
   { id: "evaluation", x: 436, y: 50, w: 196, h: 42, parent: "support" },
@@ -183,7 +187,7 @@ function GroupNode({ data }: NodeProps<MapNode>) {
               ? "组织与执行"
               : data.objectId === "environment"
                 ? "执行条件"
-                : "持续改进"}
+                : "验证 · 反馈 · 适配"}
         </span>
       </div>
       <Handle
@@ -237,7 +241,24 @@ function GroupNode({ data }: NodeProps<MapNode>) {
     </div>
   );
 }
-const nodeTypes = { object: ObjectNode, groupObject: GroupNode };
+function SystemBoundary({ data }: NodeProps<MapNode>) {
+  return (
+    <div className={`system-boundary ${data.related ? "system-related" : ""}`}>
+      <span>智能体系统</span>
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="improvement"
+        style={{ top: "68%" }}
+      />
+    </div>
+  );
+}
+const nodeTypes = {
+  object: ObjectNode,
+  groupObject: GroupNode,
+  systemBoundary: SystemBoundary,
+};
 function SignalEdge(props: EdgeProps) {
   const calculated = getSmoothStepPath(props);
   let path = calculated[0];
@@ -291,6 +312,7 @@ export function ObjectMap({
   actor = "",
   onInspect,
   onLeave,
+  inspectorPinned = false,
 }: {
   selected: string;
   onSelect: (id: string) => void;
@@ -300,25 +322,25 @@ export function ObjectMap({
   actor?: string;
   onInspect?: (id: string, rect: DOMRect, pinned: boolean) => void;
   onLeave?: () => void;
+  inspectorPinned?: boolean;
 }) {
   const reduced = useReducedMotionPreference();
   const [hovered, setHovered] = useState("");
-  const [flow, setFlow] = useState<ReactFlowInstance<MapNode> | null>(null);
+  const [viewport, setViewport] = useState<Viewport>({
+    x: 14,
+    y: 14,
+    zoom: 0.9,
+  });
   const canvas = useRef<HTMLDivElement>(null);
-  const press = useRef<{
-    id: string;
-    element: HTMLElement;
-    pointerId: number;
-    x: number;
-    y: number;
-  } | null>(null);
   function inspectElement(element: HTMLElement) {
     const id = element.dataset.id;
     if (!id) return;
-    onSelect(id);
     onInspect?.(id, element.getBoundingClientRect(), true);
+    if (!onInspect) onSelect(id);
   }
-  const focus = hovered || (moving ? actor : selected);
+  const focus = inspectorPinned
+    ? selected
+    : hovered || (moving ? actor : selected);
   const related = supportRelations[focus] ?? [];
   const crossSource = supportRelations[focus]
     ? focus === "support"
@@ -326,15 +348,27 @@ export function ObjectMap({
       : focus
     : "evaluation";
   const fit = useCallback(() => {
-    if (!flow || !canvas.current) return;
-    const { width, height } = canvas.current.getBoundingClientRect();
+    if (!canvas.current) return;
+    const width = canvas.current.clientWidth,
+      height = canvas.current.clientHeight;
     if (!width || !height) return;
-    const zoom = Math.min(1.1, (width - 28) / 790, (height - 28) / 620);
-    void flow.setViewport(
-      { x: (width - 790 * zoom) / 2, y: (height - 620 * zoom) / 2, zoom },
-      { duration: 0 },
+    const zoom = Math.max(
+      0.25,
+      Math.min(1.1, (width - 28) / 790, (height - 28) / 660),
     );
-  }, [flow]);
+    const next = {
+      x: (width - 790 * zoom) / 2,
+      y: (height - 660 * zoom) / 2,
+      zoom,
+    };
+    setViewport((previous) =>
+      Math.abs(previous.x - next.x) < 0.1 &&
+      Math.abs(previous.y - next.y) < 0.1 &&
+      Math.abs(previous.zoom - next.zoom) < 0.001
+        ? previous
+        : next,
+    );
+  }, []);
   useEffect(() => {
     if (!canvas.current) return;
     const observer = new ResizeObserver(fit);
@@ -349,10 +383,20 @@ export function ObjectMap({
     () =>
       specs.map((s) => ({
         id: s.id,
-        type: s.group ? "groupObject" : "object",
+        type:
+          s.id === "system"
+            ? "systemBoundary"
+            : s.group
+              ? "groupObject"
+              : "object",
         position: { x: s.x, y: s.y },
         parentId: s.parent,
         style: { width: s.w, height: s.h },
+        initialWidth: s.w,
+        initialHeight: s.h,
+        selectable: false,
+        focusable: s.id !== "system",
+        zIndex: s.id === "system" ? -1 : s.group ? 0 : 2,
         data: {
           label: objectById(s.id).name,
           objectId: s.id,
@@ -413,20 +457,25 @@ export function ObjectMap({
       labelBgPadding: [6, 4] as [number, number],
       labelBgBorderRadius: 4,
     }));
-    const targets = related.length
-      ? related.filter((id) => ["model", "harness", "environment"].includes(id))
-      : ["harness"];
+    const targets = ["collaboration", "personalization"].includes(focus)
+      ? ["model", "harness"]
+      : ["system"];
     const feedback = targets.map((target, index) => ({
       id: `feedback-${crossSource}-${target}`,
       source: crossSource,
       target,
       sourceHandle: "feedback",
-      targetHandle: target === "model" ? "feedback-top" : "feedback-right",
+      targetHandle:
+        target === "system"
+          ? "improvement"
+          : target === "model"
+            ? "feedback-top"
+            : "feedback-right",
       type: "signal",
       data: {
         feedback: true,
-        channel: 694 + index * 24,
-        bottom: 566 + index * 15,
+        channel: 714 + index * 24,
+        bottom: 616 + index * 15,
         moving: !reduced && moving && related.length > 0,
         color: "#b58c46",
       },
@@ -445,41 +494,32 @@ export function ObjectMap({
       ref={canvas}
       className={`map-canvas ${compact ? "compact-map" : ""}`}
       data-related={related.join(" ")}
-      onPointerDownCapture={(event) => {
-        const element = (event.target as HTMLElement).closest<HTMLElement>(
+      onPointerOver={(event) => {
+        const element = (event.target as Element).closest<HTMLElement>(
           ".react-flow__node",
         );
         const id = element?.dataset.id;
-        if (!element || !id || event.button !== 0) return;
-        press.current = {
-          id, element, pointerId: event.pointerId,
-          x: event.clientX, y: event.clientY,
-        };
+        const previous =
+          event.relatedTarget instanceof Element
+            ? event.relatedTarget.closest<HTMLElement>(".react-flow__node")
+                ?.dataset.id
+            : undefined;
+        if (!element || !id || id === "system" || id === previous) return;
+        setHovered(id);
+        onInspect?.(id, element.getBoundingClientRect(), false);
       }}
-      onPointerUpCapture={(event) => {
-        const start = press.current;
-        press.current = null;
-        if (!start || start.pointerId !== event.pointerId) return;
-        // React Flow can capture pointer-up on its pane. Keep the original
-        // node, but do not treat a drag/scroll as a tap.
-        if (Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 6) {
-          const element = canvas.current?.querySelector<HTMLElement>(
-            `.react-flow__node[data-id="${CSS.escape(start.id)}"]`,
-          );
-          inspectElement(element ?? start.element);
-        }
-      }}
-      onPointerCancelCapture={() => { press.current = null; }}
-      onClickCapture={(event) => {
-        // Assistive technology may activate a node without pointer events.
-        if (event.detail !== 0) return;
-        const element = (event.target as HTMLElement).closest<HTMLElement>(
+      onPointerOut={(event) => {
+        const next =
+          event.relatedTarget instanceof Element
+            ? event.relatedTarget.closest<HTMLElement>(".react-flow__node")
+                ?.dataset.id
+            : undefined;
+        const id = (event.target as Element).closest<HTMLElement>(
           ".react-flow__node",
-        );
-        const id = element?.dataset.id;
-        if (!element || !id) return;
-        event.stopPropagation();
-        inspectElement(element);
+        )?.dataset.id;
+        if (next === id) return;
+        setHovered(next ?? "");
+        if (!next) onLeave?.();
       }}
       onFocusCapture={(event) => {
         const id = (event.target as HTMLElement).closest<HTMLElement>(
@@ -488,8 +528,11 @@ export function ObjectMap({
         if (id) setHovered(id);
       }}
       onBlurCapture={(event) => {
-        if (!(event.relatedTarget instanceof Element) ||
-            !event.relatedTarget.closest(".react-flow__node")) setHovered("");
+        if (
+          !(event.relatedTarget instanceof Element) ||
+          !event.relatedTarget.closest(".react-flow__node")
+        )
+          setHovered("");
       }}
       onKeyDownCapture={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
@@ -508,22 +551,17 @@ export function ObjectMap({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onNodeMouseEnter={(event, node) => {
-          setHovered(node.id);
-          onInspect?.(
-            node.id,
-            (event.currentTarget as HTMLElement).getBoundingClientRect(),
-            false,
-          );
-        }}
-        onNodeMouseLeave={() => {
-          setHovered("");
-          onLeave?.();
-        }}
+        onNodeClick={(event) =>
+          inspectElement(event.currentTarget as HTMLElement)
+        }
         onInit={(instance) => {
-          setFlow(instance);
           onReady?.(instance);
         }}
+        viewport={viewport}
+        onViewportChange={setViewport}
+        elementsSelectable={false}
+        selectNodesOnDrag={false}
+        onlyRenderVisibleElements={false}
         minZoom={0.25}
         maxZoom={1.8}
         autoPanOnNodeFocus={false}
@@ -534,6 +572,7 @@ export function ObjectMap({
         zoomOnScroll={false}
         panOnScroll={false}
         zoomOnDoubleClick={false}
+        zoomOnPinch={false}
         preventScrolling={false}
         proOptions={{ hideAttribution: false }}
       >
@@ -576,6 +615,7 @@ export function MapSection({
   } | null>(null);
   const popupRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stage = stages[tick];
   const inspected = popup ? objectById(popup.id) : null;
   const object = objectById(selected);
@@ -594,24 +634,31 @@ export function MapSection({
   useEffect(
     () => () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
+      if (openTimer.current) clearTimeout(openTimer.current);
     },
     [],
   );
   useEffect(() => {
-    if (!popup) return;
     const outside = (event: PointerEvent) => {
       if (
         !popupRef.current?.contains(event.target as globalThis.Node) &&
         !(event.target as HTMLElement).closest(".react-flow__node")
-      )
+      ) {
+        cancelClose();
         setPopup(null);
+      }
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPopup(null);
+      if (event.key === "Escape") {
+        cancelClose();
+        setPopup(null);
+      }
     };
     const scroll = (event: Event) => {
-      if (!popupRef.current?.contains(event.target as globalThis.Node))
-        setPopup(null);
+      if (!popupRef.current?.contains(event.target as globalThis.Node)) {
+        cancelClose();
+        setPopup(current => current?.pinned ? current : null);
+      }
     };
     document.addEventListener("pointerdown", outside);
     document.addEventListener("keydown", key);
@@ -621,9 +668,10 @@ export function MapSection({
       document.removeEventListener("keydown", key);
       window.removeEventListener("scroll", scroll, true);
     };
-  }, [!!popup]);
+  }, []);
   function cancelClose() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (openTimer.current) clearTimeout(openTimer.current);
   }
   function select(id: string) {
     setSelected(id);
@@ -631,17 +679,44 @@ export function MapSection({
   }
   function inspect(id: string, rect: DOMRect, pinned: boolean) {
     cancelClose();
-    setPopup((previous) => {
-      if (previous?.pinned && !pinned) return previous;
-      const width = Math.min(292, innerWidth - 24);
-      const left = Math.max(
-        12,
-        Math.min(rect.right + 12, innerWidth - width - 12),
-      );
-      const top = Math.max(72, Math.min(rect.top, innerHeight - 330));
-      return { id, left, top, pinned };
-    });
-    if (pinned) select(id);
+    const show = () =>
+      setPopup((previous) => {
+        if (previous?.pinned && !pinned) return previous;
+        if (previous?.id === id)
+          return pinned && !previous.pinned
+            ? { ...previous, pinned: true }
+            : previous;
+        const width = Math.min(300, innerWidth - 32);
+        const height = pinned ? 260 : 210;
+        const rightFits = rect.right + 12 + width <= innerWidth - 16;
+        const leftFits = rect.left - 12 - width >= 16;
+        const left = Math.max(
+          16,
+          Math.min(
+            rightFits
+              ? rect.right + 12
+              : leftFits
+                ? rect.left - width - 12
+                : rect.left,
+            innerWidth - width - 16,
+          ),
+        );
+        const desiredTop =
+          rightFits || leftFits
+            ? rect.top
+            : rect.bottom + 12 + height < innerHeight
+              ? rect.bottom + 12
+              : rect.top - height - 12;
+        const top = Math.max(
+          72,
+          Math.min(desiredTop, innerHeight - height - 16),
+        );
+        return { id, left, top, pinned };
+      });
+    if (pinned) {
+      show();
+      select(id);
+    } else openTimer.current = setTimeout(show, 160);
   }
   function leave() {
     cancelClose();
@@ -693,6 +768,7 @@ export function MapSection({
             actor={stage.id}
             onInspect={inspect}
             onLeave={leave}
+            inspectorPinned={Boolean(popup?.pinned)}
           />
           <div className="map-stage-caption" aria-live="off">
             <strong>
@@ -706,7 +782,11 @@ export function MapSection({
               {playing
                 ? stage.detail
                 : selectedRelation
-                  ? "上方已强调相关对象，虚线表示改进关联。"
+                  ? selected === "personalization"
+                    ? "主要适配模型、Prompt与记忆；运行环境作为执行与验证条件。"
+                    : selected === "collaboration"
+                      ? "先分开优化模型与Harness，单侧遇到瓶颈后再评估联合调整。"
+                      : "面向整套智能体系统验证效果，反馈与样本再回流到具体优化对象。"
                   : "点击下方改进支撑对象，可查看与上方对象的关联。"}
             </span>
           </div>
@@ -744,12 +824,7 @@ export function MapSection({
                   <strong>{object.name}</strong>
                   <p>{object.definition}</p>
                   <p>{object.purpose}</p>
-                  <Button
-                    disabled={selected !== "model"}
-                    onClick={() => onLearn("model")}
-                  >
-                    {selected === "model" ? "进入模型优化" : "对应内容待开放"}
-                  </Button>
+                  {selected === "model" ? <Button onClick={() => onLearn("model")}>进入模型优化</Button> : <p className="expanded-map-status">章节内容待补充</p>}
                 </div>
               </div>
             </Modal>
@@ -790,25 +865,21 @@ export function MapSection({
         </aside>
       </div>
       {createPortal(
-        <AnimatePresence>
-          {popup && inspected && (
-            <motion.aside
-              ref={popupRef}
-              key={popup.id}
-              className={`object-popover tone-${toneOf(popup.id)}`}
-              style={{ left: popup.left, top: popup.top }}
-              role="dialog"
-              aria-modal="false"
-              aria-label={`${inspected.name}定义与作用`}
-              onMouseEnter={cancelClose}
-              onMouseLeave={leave}
-              initial={reduced ? false : { opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
-            >
-              <header>
-                <h3>{inspected.name}</h3>
+        popup && inspected ? (
+          <aside
+            ref={popupRef}
+            key={popup.id}
+            className={`object-popover object-inspector tone-${toneOf(popup.id)} ${popup.pinned ? "is-pinned" : "is-preview"}`}
+            style={{ left: popup.left, top: popup.top }}
+            role="dialog"
+            aria-modal="false"
+            aria-label={`${inspected.name}定义与作用`}
+            onMouseEnter={cancelClose}
+            onMouseLeave={leave}
+          >
+            <header>
+              <h3>{inspected.name}</h3>
+              {popup.pinned && (
                 <button
                   className="icon-btn"
                   aria-label="关闭对象说明"
@@ -816,25 +887,35 @@ export function MapSection({
                 >
                   <X size={15} />
                 </button>
-              </header>
-              <h4>定义</h4>
-              <p>{inspected.definition}</p>
-              <h4>作用</h4>
-              <p>{inspected.purpose}</p>
-              <Button
-                variant="secondary"
-                disabled={popup.id !== "model"}
+              )}
+            </header>
+            <dl>
+              <div>
+                <dt>定义</dt>
+                <dd>{inspected.definition}</dd>
+              </div>
+              <div>
+                <dt>作用</dt>
+                <dd>{inspected.purpose}</dd>
+              </div>
+            </dl>
+            {popup.pinned && popup.id === "model" && (
+              <button
+                className="object-inspector-action"
                 onClick={() => {
                   setPopup(null);
                   onLearn("model");
                 }}
               >
-                {popup.id === "model" ? "进入模型优化" : "对应内容待开放"}
+                进入模型优化
                 <ChevronRight size={14} />
-              </Button>
-            </motion.aside>
-          )}
-        </AnimatePresence>,
+              </button>
+            )}
+            {popup.pinned && popup.id !== "model" && (
+              <p className="object-inspector-status">章节内容待补充</p>
+            )}
+          </aside>
+        ) : null,
         document.body,
       )}
     </div>

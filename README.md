@@ -140,4 +140,4 @@ Invoke-RestMethod http://127.0.0.1:4173/api/local-data/manifest
 
 ## 开发检查
 
-在 `web` 目录运行 `npm run test:unit` 与 `npm run build`。启动本地服务后，`npm run test:guide`检查总纲地图和决策路线，`npm run test:playback`检查点击与播放生命周期，`npm run test:reading`检查阅读与目录定位，`npm run test:e2e`检查真实导出工作台。页面检查使用独立无头Edge，不读取已有浏览器标签或桌面。
+在 `web` 目录运行 `npm run test:unit` 与 `npm run build`。启动本地服务后，`npm run test:home`检查当前唯一首页、章节卡片及旧地址兼容，`npm run test:guide`检查总纲地图和决策路线，`npm run test:playback`检查点击与播放生命周期，`npm run test:reading`检查阅读与目录定位，`npm run test:e2e`检查真实导出工作台。页面检查使用独立无头Edge，不读取已有浏览器标签或桌面。

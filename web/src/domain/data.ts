@@ -20,10 +20,10 @@ export const objects: ObjectDef[] = [
   {id:'sandbox',name:'仿真与沙箱',definition:'可控制条件的运行与验证环境。',purpose:'隔离影响、复现行为，检验资源与配置。',course:'verify'},
   {id:'monitoring',name:'运行状态观测',definition:'对执行过程、资源和异常状态的记录与展示。',purpose:'让过程可见、异常可追溯。',course:'runtime'},
   {id:'safety',name:'安全监督',definition:'针对风险行为的监测、校验、预警与拦截机制。',purpose:'使高风险动作遵守既定边界并留下可查记录。',course:'decisions'},
-  {id:'support',name:'跨对象改进与支撑',definition:'为多个优化对象提供联合调整、适配与验证的支撑机制。',purpose:'使跨对象改动、反馈适配与效果验证形成可检查的改进过程。',course:'verify',group:true},
+  {id:'support',name:'跨对象改进与支撑',definition:'位于智能体系统之外，为模型与Harness协同、反馈适配及整体测评提供支撑的机制。',purpose:'将验证与反馈回流到具体对象，持续改善整体任务效果；不代表同时自动修改全部组件。',course:'verify',group:true},
   {id:'collaboration',name:'协同优化',definition:'对多个组件配合方式进行有计划的联合调整。',purpose:'在单侧优化遇到瓶颈后，验证协同改进的收益。',course:'verify'},
-  {id:'personalization',name:'个性化与自进化',definition:'利用反馈与用户差异持续适配行为的机制。',purpose:'使偏好、纠正和业务变化转化为可验证的改进。',course:'verify'},
-  {id:'evaluation',name:'测评与数据飞轮',definition:'用任务、指标和反馈数据验证并推动改进的体系。',purpose:'知道改动是否有效，积累下一轮优化所需数据。',course:'verify'},
+  {id:'personalization',name:'个性化与自进化',definition:'利用用户偏好、纠正和任务反馈，持续适配模型行为、Prompt与记忆等机制。',purpose:'形成可验证的改进候选；涉及模型参数或机制更新时需另行验证，环境仍是执行与测试条件。',course:'verify'},
+  {id:'evaluation',name:'测评与数据飞轮',definition:'在明确任务、指标和环境条件下，验证整套智能体系统效果并积累反馈数据的体系。',purpose:'比较具体改动对完整任务的影响，回流样本与判据，为下一轮归因和优化提供依据。',course:'verify'},
 ];
 export const objectById = (id: string) => objects.find(o=>o.id===id) ?? objects[0];
 export const phaseNames: Record<PhaseNumber,string> = {1:'请求接收与任务状态读取',2:'上下文准备与组装',3:'模型调用与返回',4:'动作校验、调度与执行',5:'结果处理与状态更新',6:'输出处理与交付'};

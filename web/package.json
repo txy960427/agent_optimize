@@ -12,6 +12,7 @@
     "test:reading": "node ../scripts/pages/reading-check.mjs",
     "test:playback": "node ../scripts/pages/playback-lifecycle-check.mjs",
     "test:layout": "node ../scripts/pages/layout-audit.mjs test-results/layout-after --verify",
+    "test:home": "node ../scripts/pages/home-check.mjs",
     "test:e2e": "node ../scripts/pages/practice-workspace-check.mjs",
     "test:data": "node ../scripts/data/export-data-check.mjs"
   },

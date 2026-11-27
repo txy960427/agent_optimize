@@ -251,6 +251,11 @@ input[type=radio],input[type=checkbox] { accent-color: var(--primary); }
   .outline-object-map .map-principles { border-left: 0; border-top: 1px solid #d4deec; }
 }
 @media (prefers-reduced-motion: reduce) { .app-sidebar { transition: none; } }
+@media (max-width: 360px) {
+  .site-header .brand { min-width: 0; }
+  .site-header .brand-mark { flex-shrink: 0; }
+  .site-header .brand > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
 @media print {
   .site-header,.app-sidebar,.app-nav-backdrop,.article-toc,.mobile-menu,.navigation-peek { display: none !important; }
   .app-shell { display: block; }

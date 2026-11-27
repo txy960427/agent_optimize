@@ -1,4 +1,9 @@
 export function normalizeReadingRoute(route:string){
+  if(route.split('?')[0]==='/'){
+    const query=new URLSearchParams(route.split('?')[1]??'');
+    for(const key of ['home','version','concept','compare'])query.delete(key);
+    return query.size?'/?'+query.toString():'/';
+  }
   return route.split('?')[0]==='/learn/objects'?'/guide?section=map':route;
 }
 
